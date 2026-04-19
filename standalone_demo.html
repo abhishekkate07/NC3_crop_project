@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Crop Doctor (Standalone Demo)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        :root {
+          --primary-color: #2e7d32;
+          --primary-light: #60ad5e;
+          --primary-dark: #005005;
+          --secondary-color: #fbc02d;
+          --bg-color: #f4f6f8;
+          --surface-color: #ffffff;
+          --text-dark: #1f2937;
+          --text-light: #6b7280;
+          --danger: #ef4444;
+          --success: #10b981;
+          --radius: 12px;
+          --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        body {
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          background-color: var(--bg-color);
+          color: var(--text-dark);
+          line-height: 1.5;
+        }
+
+        /* === Landing Page === */
+        .landing-page { position: relative; min-height: 100vh; background-color: #0b1a11; color: #ffffff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        
+        .landing-bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; opacity: 0.35; pointer-events: none; }
+        .landing-gradient { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to right, #0b1a11 30%, transparent 100%); z-index: 1; pointer-events: none; }
+
+        .landing-navbar { display: flex; justify-content: space-between; align-items: center; padding: 2rem 4rem; position: absolute; top: 0; left: 0; right: 0; z-index: 100; }
+        .landing-logo { font-size: 1.5rem; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 0.5rem; letter-spacing: -0.5px; z-index: 100; }
+        .landing-nav-links { display: flex; gap: 2rem; align-items: center; z-index: 100; }
+        .landing-nav-links span { cursor: pointer; font-weight: 500; color: #ffffff; transition: color 0.2s; font-size: 1rem; }
+        .landing-nav-links span:hover { color: #a3e635; }
+        
+        .btn-outline-white { background: transparent; border: 1px solid #ffffff; color: #ffffff; padding: 0.7rem 1.8rem; border-radius: 100px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-outline-white:hover { background: #ffffff; color: #0b1a11; }
+
+        .hero-section { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 0 4rem; max-width: 1400px; margin: 0 auto; }
+        .hero-text { max-width: 750px; margin-top: 2rem; animation: fadeIn 1s ease-out forwards; }
+        .tagline { display: inline-flex; align-items: center; gap: 0.5rem; color: #a3e635; font-weight: 700; font-size: 0.9rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 2px; }
+        .hero-text h1 { font-size: 6rem; font-weight: 800; line-height: 1.05; letter-spacing: -2px; margin-bottom: 2rem; color: #ffffff; }
+        .hero-text p { font-size: 1.4rem; color: #d1d5db; margin-bottom: 3rem; line-height: 1.6; font-weight: 300; max-width: 90%; }
+        
+        .hero-buttons { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+        .btn-bowery-primary { background: #a3e635; color: #0b1a11; border: none; padding: 1.2rem 2.5rem; border-radius: 100px; font-weight: 700; font-size: 1.1rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.8rem; transition: all 0.3s ease; }
+        .btn-bowery-primary:hover { background: #84cc16; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(163, 230, 53, 0.2); }
+        .btn-bowery-secondary { background: transparent; color: #ffffff; border: 1px solid rgba(255,255,255,0.4); padding: 1.2rem 2.5rem; border-radius: 100px; font-weight: 600; font-size: 1.1rem; cursor: pointer; transition: all 0.3s ease; }
+        .btn-bowery-secondary:hover { border-color: #ffffff; background: rgba(255,255,255,0.1); }
+
+        .trusted-section { margin-top: 4rem; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 2rem; display: flex; align-items: center; gap: 1.5rem; }
+        .trusted-avatars { display: flex; }
+        .trusted-avatars img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #0b1a11; }
+        .trusted-avatars img:not(:first-child) { margin-left: -15px; }
+        .trusted-text { font-size: 0.95rem; color: #9ca3af; }
+        .trusted-text strong { color: #ffffff; font-weight: 600; }
+
+        /* === Dashboard Base === */
+        .app-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: var(--surface-color); padding: 2rem 1.5rem; box-shadow: 2px 0 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 2rem; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; }
+        .nav-menu { display: flex; flex-direction: column; gap: 0.5rem; }
+        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius); color: var(--text-light); font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+        .nav-item:hover, .nav-item.active { background: rgba(46, 125, 50, 0.1); color: var(--primary-color); }
+        .main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 1.8rem; color: var(--text-dark); }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .card { background: var(--surface-color); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow); transition: transform 0.2s ease; }
+        .card:hover { transform: translateY(-2px); }
+        .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.85rem; }
+        
+        /* Utils */
+        .btn { background: var(--primary-color); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.2s; justify-content: center; }
+        .btn:hover { background: var(--primary-dark); }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+        .badge.success { background: #d1fae5; color: #065f46; }
+        .badge.warning { background: #fef3c7; color: #92400e; }
+        .badge.danger { background: #fee2e2; color: #b91c1c; }
+
+        /* Upload Area */
+        .upload-area { border: 2px dashed var(--primary-light); border-radius: var(--radius); padding: 2rem; text-align: center; cursor: pointer; background: rgba(96, 173, 94, 0.05); transition: all 0.3s; }
+        .upload-area:hover { background: rgba(96, 173, 94, 0.1); border-color: var(--primary-color); }
+
+        /* Timeline */
+        .timeline { display: flex; flex-direction: column; gap: 1rem; }
+        .timeline-item { display: flex; gap: 1rem; border-left: 2px solid var(--primary-light); padding-left: 1rem; position: relative; }
+        .timeline-item::before { content: ''; position: absolute; left: -6px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--primary-color); }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--text-dark); }
+
+        /* Profile Forms */
+        .profile-banner { background: linear-gradient(135deg, rgba(46,125,50,0.85), rgba(16,185,129,0.9)), url('https://images.unsplash.com/photo-1592982537447-6f296d194bea?auto=format&fit=crop&w=1200&q=80') center/cover; border-radius: var(--radius); padding: 4rem 2rem; color: white; margin-bottom: -5rem; box-shadow: var(--shadow); text-align: center; }
+        .profile-banner h2 { font-size: 2.5rem; margin-bottom: 0.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .profile-glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.6); border-radius: var(--radius); padding: 2.5rem; max-width: 800px; margin: 0 auto; box-shadow: 0 12px 30px -10px rgba(0,0,0,0.15); position: relative; z-index: 10; }
+        .form-group-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .input-label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-dark); }
+        .input-field { width: 100%; padding: 0.85rem 1rem; border: 1px solid #d1d5db; border-radius: 8px; font-family: inherit; font-size: 1rem; transition: all 0.2s; background-color: #fafafa; }
+        .input-field:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(46,125,50,0.15); background-color: #fff; }
+
+        @media (max-width: 768px) {
+          .app-container { flex-direction: column; }
+          .sidebar { width: 100%; padding: 1rem; }
+          .nav-menu { flex-direction: row; overflow-x: auto; }
+          .form-group-grid { grid-template-columns: 1fr; }
+          .hero-section { padding: 8rem 2rem 4rem 2rem; justify-content: flex-start; }
+          .hero-text { margin-top: 0; }
+          .hero-text h1 { font-size: 3.5rem; }
+          .hero-text p { font-size: 1.1rem; }
+          .landing-navbar { padding: 1.5rem 2rem; }
+          .landing-nav-links { gap: 1rem; }
+          .btn-outline-white { padding: 0.5rem 1rem; font-size: 0.9rem; }
+          .hero-buttons { flex-direction: column; width: 100%; align-items: stretch; }
+          .btn-bowery-primary, .btn-bowery-secondary { text-align: center; justify-content: center; }
+          .trusted-section { flex-direction: column; align-items: flex-start; gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const LeafIcon = () => <span style={{fontSize: '24px'}}>🍃</span>;
+        const ActivityIcon = () => <span style={{fontSize: '18px'}}>📊</span>;
+        const UploadIcon = () => <span style={{fontSize: '18px'}}>📤</span>;
+        const CalendarIcon = () => <span style={{fontSize: '18px'}}>📅</span>;
+        const ChartIcon = () => <span style={{fontSize: '18px'}}>📈</span>;
+        const DropletIcon = () => <span style={{fontSize: '18px'}}>💧</span>;
+        const WindIcon = () => <span style={{fontSize: '18px'}}>☀️</span>;
+        const AlertIcon = () => <span style={{fontSize: '18px'}}>⚠️</span>;
+        const UserIcon = () => <span style={{fontSize: '18px'}}>👨‍🌾</span>;
+        const TestTubeIcon = () => <span style={{fontSize: '18px'}}>🧪</span>;
+        const ThermalIcon = () => <span style={{fontSize: '18px'}}>🤒</span>;
+        const ShieldIcon = () => <span style={{fontSize: '28px'}}>🛡️</span>;
+
+        function App() {
+          const [appView, setAppView] = useState('landing'); 
+          const [authMode, setAuthMode] = useState('login'); 
+
+          const [activeTab, setActiveTab] = useState('dashboard');
+          const [selectedImage, setSelectedImage] = useState(null);
+          const [isAnalyzing, setIsAnalyzing] = useState(false);
+          const [prediction, setPrediction] = useState(null);
+          const [schedule, setSchedule] = useState(null);
+
+          const [profileData, setProfileData] = useState({
+            name: "",
+            phone: "",
+            address: "",
+            pincode: "",
+            state: "",
+            district: ""
+          });
+
+          // Handlers
+          const handleProfileChange = (e) => {
+            setProfileData({ ...profileData, [e.target.name]: e.target.value });
+          };
+
+          const handleAuthSubmit = (e) => {
+            e.preventDefault();
+            if(authMode === 'signup') {
+               setAppView('onboarding');
+            } else {
+               setProfileData({...profileData, name: "Farmers Demo"});
+               setAppView('dashboard');
+               setActiveTab('dashboard');
+            }
+          };
+
+          const handleOnboardingSubmit = (e) => {
+            e.preventDefault();
+            alert("Profile Created Successfully!");
+            setAppView('dashboard');
+            setActiveTab('dashboard');
+          };
+
+          const saveProfileInApp = (e) => {
+            e.preventDefault();
+            alert("Farmer Profile Details Saved Successfully! 🎉");
+          };
+
+          const handleImageUpload = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              setSelectedImage(URL.createObjectURL(file));
+              setPrediction(null);
+            }
+          };
+
+          const runAnalysis = async () => {
+            setIsAnalyzing(true);
+            setTimeout(() => {
+              // highly detailed mock response
+              setPrediction({
+                disease: "Late Blight (Phytophthora infestans)",
+                confidence: 0.96,
+                description: "A destructive fungal-like disease that rapidly destroys crop foliage and fruit, particularly devastating to potatoes and tomatoes under humid, cool conditions. If left untreated, it can wipe out an entire field within days.",
+                symptoms: [
+                    "Water-soaked, dark green to black spots appearing on the tips and edges of leaves.",
+                    "White, fuzzy fungal growth on the undersides of leaves during highly humid weather.",
+                    "Rapid browning, shriveling, and death of entire foliage."
+                ],
+                causes: [
+                    "Pathogen: Oomycete Phytophthora infestans.",
+                    "Transmission: Heavy wind currents and splashed rain drops.",
+                    "Favorable Weather: Thrives in cool nights (10°C - 15°C) and warm days (15°C - 21°C) accompanied by high humidity."
+                ],
+                chemicalTreatment: [
+                    { name: "Chlorothalonil (Protective Fungicide)", dosage: "2ml per liter of water. Apply immediately as a uniform foliar spray." },
+                    { name: "Copper-based Fungicides (e.g., Copper Oxychloride)", dosage: "3g per liter of water. Reapply every 7-10 days." },
+                    { name: "Mancozeb", dosage: "2.5g per liter of water. Ensure thorough coverage on both sides of the leaf." }
+                ],
+                organicTreatment: [
+                    "Swiftly remove and destroy (burn or bury deep) all infected plant parts.",
+                    "Avoid compost bins for infected leaves.",
+                    "Prune lower leaves to ensure excellent air circulation between rows.",
+                    "Transition entirely to drip-irrigation to keep the foliar canopy completely dry."
+                ],
+                prevention: "Implement a strict 3-4 year crop rotation cycle strictly avoiding crops from the Solanaceae family."
+              });
+              
+              setSchedule([
+                {"day": 0, "action": "Immediate Pruning & Sanitization", "description": "Remove all infected leaves. Burn them away from the farm."},
+                {"day": 1, "action": "First Fungicide Application", "description": "Apply Chlorothalonil heavily during early morning."},
+                {"day": 3, "action": "Microclimate Check", "description": "Stop all overhead sprinklers. Ensure crop has deep air flow."},
+                {"day": 7, "action": "Follow-up Chemical Spray", "description": "Rotate secondary chemical (Mancozeb) to prevent pathogen resistance."}
+              ]);
+              setIsAnalyzing(false);
+            }, 2800);
+          };
+
+          // VIEW RENDERERS:
+          if(appView === 'landing') {
+              return (
+                <div className="landing-page">
+                  <img src="https://images.unsplash.com/photo-1530836369250-ef71a3a5a4fda?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" alt="Modern agriculture" className="landing-bg-image" />
+                  <div className="landing-gradient"></div>
+                  
+                  <nav className="landing-navbar">
+                    <div className="landing-logo"><LeafIcon /> CropDoctor</div>
+                    <div className="landing-nav-links">
+                      <span onClick={() => { setAuthMode('login'); setAppView('auth'); }}>Login</span>
+                      <button className="btn-outline-white" onClick={() => { setAppView('onboarding'); }}>Create Account</button>
+                    </div>
+                  </nav>
+                  
+                  <section className="hero-section">
+                    <div className="hero-text">
+                      <div className="tagline">The Future of Agriculture</div>
+                      <h1>What grows here<br/>changes everything.</h1>
+                      <p>Instantly diagnose crop diseases with 99.4% accuracy. Get highly detailed scientific treatments and optimize your yields with our advanced AI platform.</p>
+                      
+                      <div className="hero-buttons">
+                         <button className="btn-bowery-primary" onClick={() => { setAppView('onboarding'); }}>
+                            Start Free Diagnosis
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                         </button>
+                         <button className="btn-bowery-secondary" onClick={() => { setAuthMode('login'); setAppView('auth'); }}>View Dashboard</button>
+                      </div>
+
+                      <div className="trusted-section">
+                         <div className="trusted-avatars">
+                            <img src="https://ui-avatars.com/api/?name=Farmer+A&background=random" style={{zIndex: 3}} />
+                            <img src="https://ui-avatars.com/api/?name=Farmer+B&background=random" style={{zIndex: 2}} />
+                            <img src="https://ui-avatars.com/api/?name=Farmer+C&background=random" style={{zIndex: 1}} />
+                         </div>
+                         <p className="trusted-text">Trusted by <strong>10,000+</strong> progressive farmers.</p>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              )
+          }
+
+          if(appView === 'auth') {
+              return (
+                 <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%)' }}>
+                  <div className="card" style={{ width: '100%', maxWidth: '420px', padding: '2.5rem' }}>
+                     <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                        <LeafIcon />
+                        <h2 style={{ marginTop: '0.5rem' }}>{authMode === 'login' ? 'Welcome Back' : 'Create an Account'}</h2>
+                        <p style={{color: 'var(--text-light)', marginTop: '0.5rem'}}>{authMode === 'login' ? 'Login to access your farm dashboard.' : 'Join CropDoctor today.'}</p>
+                     </div>
+                     <form onSubmit={handleAuthSubmit}>
+                        <div className="form-group">
+                           <label className="input-label">Email Address</label>
+                           <input type="email" required className="input-field" placeholder="farmer@example.com" />
+                        </div>
+                        <div className="form-group">
+                           <label className="input-label">Password</label>
+                           <input type="password" required className="input-field" placeholder="••••••••" />
+                        </div>
+                        <button type="submit" className="btn" style={{ width: '100%', marginTop: '1rem' }}>
+                            {authMode === 'login' ? 'Secure Login' : 'Create Account'}
+                        </button>
+                     </form>
+                     <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem' }}>
+                        {authMode === 'login' ? (
+                            <p>Don't have an account? <span style={{color: 'var(--primary-color)', cursor: 'pointer', fontWeight: 600}} onClick={() => setAppView('onboarding')}>Sign up here</span></p>
+                        ) : (
+                            <p>Already have an account? <span style={{color: 'var(--primary-color)', cursor: 'pointer', fontWeight: 600}} onClick={() => setAuthMode('login')}>Login here</span></p>
+                        )}
+                     </div>
+                  </div>
+                </div>
+              )
+          }
+
+          if(appView === 'onboarding') {
+              return (
+                  <div style={{ minHeight: '100vh', backgroundColor: '#f4f6f8' }}>
+                      <div className="profile-banner" style={{ borderRadius: '0 0 24px 24px', paddingBottom: '6rem' }}>
+                          <h2>Welcome to CropDoctor!</h2>
+                          <p>Let's complete your farm profile so we can provide perfectly localized insights.</p>
+                      </div>
+                      
+                      <div className="profile-glass-card" style={{ marginTop: '-4rem' }}>
+                          <form onSubmit={handleOnboardingSubmit}>
+                            <div className="form-group-grid">
+                              <div className="form-group">
+                                <label className="input-label">Full Name</label>
+                                <input type="text" name="name" className="input-field" value={profileData.name} onChange={handleProfileChange} required placeholder="Ramesh Patel"/>
+                              </div>
+                              <div className="form-group">
+                                <label className="input-label">Phone Number</label>
+                                <input type="tel" name="phone" className="input-field" value={profileData.phone} onChange={handleProfileChange} required placeholder="+91 99999 99999"/>
+                              </div>
+                            </div>
+
+                            <div className="form-group">
+                              <label className="input-label">Complete Farm Address</label>
+                              <textarea name="address" className="input-field" rows="2" value={profileData.address} onChange={handleProfileChange} required placeholder="Farm Plot No, Village Name..."></textarea>
+                            </div>
+
+                            <div className="form-group-grid">
+                              <div className="form-group">
+                                <label className="input-label">District</label>
+                                <input type="text" name="district" className="input-field" value={profileData.district} onChange={handleProfileChange} required />
+                              </div>
+                              <div className="form-group">
+                                <label className="input-label">State</label>
+                                <input type="text" name="state" className="input-field" value={profileData.state} onChange={handleProfileChange} required />
+                              </div>
+                            </div>
+
+                            <div className="form-group" style={{ width: '100%', maxWidth: '380px' }}>
+                              <label className="input-label">Pincode</label>
+                              <input type="text" name="pincode" className="input-field" value={profileData.pincode} onChange={handleProfileChange} required />
+                            </div>
+
+                            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+                              <button type="submit" className="btn" style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }}>
+                                Finish Setup & Go To Dashboard
+                              </button>
+                            </div>
+                          </form>
+                      </div>
+                  </div>
+              )
+          }
+
+          // Main DASHBOARD VIEW
+          return (
+            <div className="app-container">
+              <aside className="sidebar">
+                <div className="logo" style={{ cursor: 'pointer' }} onClick={() => setAppView('landing')}>
+                  <LeafIcon />
+                  <span style={{marginLeft: '0.5rem'}}>CropDoctor</span>
+                </div>
+                <nav className="nav-menu">
+                  <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                    <ActivityIcon /> Overview
+                  </div>
+                  <div className={`nav-item ${activeTab === 'diagnosis' ? 'active' : ''}`} onClick={() => setActiveTab('diagnosis')}>
+                    <UploadIcon /> AI Diagnosis Lab
+                  </div>
+                  <div className={`nav-item ${activeTab === 'timeline' ? 'active' : ''}`} onClick={() => setActiveTab('timeline')}>
+                    <CalendarIcon /> Treatment Plan
+                  </div>
+                  <div className={`nav-item ${activeTab === 'soil' ? 'active' : ''}`} onClick={() => setActiveTab('soil')}>
+                    <ChartIcon /> Soil Analytics
+                  </div>
+                  <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+                    <UserIcon /> Farmer Profile
+                  </div>
+                </nav>
+                <div style={{ marginTop: 'auto' }}>
+                    <button className="btn" style={{ width: '100%', background: 'transparent', color: 'var(--danger)', border: '1px solid var(--danger)' }} onClick={() => setAppView('landing')}>Logout</button>
+                </div>
+              </aside>
+
+              <main className="main-content">
+                <header className="header">
+                  <h1>{activeTab === 'diagnosis' ? 'Deep AI Diagnosis Lab' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h1>
+                  <div className="user-profile" onClick={() => setActiveTab('profile')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginRight: '1rem' }}>Welcome, {profileData.name.split(' ')[0] || 'Farmer'}</span>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary-light)', display: 'inline-block', overflow: 'hidden' }}>
+                      <img src={`https://ui-avatars.com/api/?name=${(profileData.name || 'Farmer').replace(' ', '+')}&background=60ad5e&color=fff`} style={{width: '100%'}}/>
+                    </div>
+                  </div>
+                </header>
+
+                {activeTab === 'profile' && (
+                  <div>
+                    <div className="profile-banner">
+                      <h2>Farmer Profile</h2>
+                      <p>Manage your personal details and complete farm location to receive localized weather and market insights.</p>
+                    </div>
+                    
+                    <div className="profile-glass-card">
+                      <form onSubmit={saveProfileInApp}>
+                        <div className="form-group-grid">
+                          <div className="form-group">
+                            <label className="input-label">Full Name</label>
+                            <input type="text" name="name" className="input-field" value={profileData.name} onChange={handleProfileChange} required placeholder="e.g. Ramesh Patel"/>
+                          </div>
+                          <div className="form-group">
+                            <label className="input-label">Phone Number</label>
+                            <input type="tel" name="phone" className="input-field" value={profileData.phone} onChange={handleProfileChange} required placeholder="+91 XXXXX XXXXX"/>
+                          </div>
+                        </div>
+
+                        <div className="form-group">
+                          <label className="input-label">Complete Farm Address</label>
+                          <textarea name="address" className="input-field" rows="3" value={profileData.address} onChange={handleProfileChange} required placeholder="House No, Street, Landmark..."></textarea>
+                        </div>
+
+                        <div className="form-group-grid">
+                          <div className="form-group">
+                            <label className="input-label">District</label>
+                            <input type="text" name="district" className="input-field" value={profileData.district} onChange={handleProfileChange} required />
+                          </div>
+                          <div className="form-group">
+                            <label className="input-label">State</label>
+                            <input type="text" name="state" className="input-field" value={profileData.state} onChange={handleProfileChange} required />
+                          </div>
+                        </div>
+
+                        <div className="form-group" style={{ width: '100%', maxWidth: '380px' }}>
+                          <label className="input-label">Pincode</label>
+                          <input type="text" name="pincode" className="input-field" value={profileData.pincode} onChange={handleProfileChange} required />
+                        </div>
+
+                        <div style={{ marginTop: '2rem', textAlign: 'right' }}>
+                          <button type="submit" className="btn" style={{ width: 'auto', padding: '0.8rem 2.5rem' }}>
+                            Update Profile Details
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'dashboard' && (
+                  <>
+                    <div className="dashboard-grid">
+                      <div className="card">
+                        <div className="card-header"><DropletIcon /> Irrigation Status</div>
+                        <div className="stat-value" style={{ color: 'var(--primary-dark)' }}>Optimal</div>
+                        <p style={{ marginTop: '0.5rem', color: 'var(--text-light)', fontSize: '0.9rem' }}>Soil moisture at 45%. No immediate action required.</p>
+                      </div>
+                      <div className="card">
+                        <div className="card-header"><WindIcon /> Weather Forecast</div>
+                        <div className="stat-value">28°C</div>
+                        <p style={{ marginTop: '0.5rem', color: 'var(--text-light)', fontSize: '0.9rem' }}>Sunny. Perfect conditions for foliar spray application.</p>
+                      </div>
+                      <div className="card">
+                        <div className="card-header"><ActivityIcon /> Farm Health index</div>
+                        <div className="stat-value" style={{ color: 'var(--success)' }}>86/100</div>
+                        <div style={{ marginTop: '0.5rem', width: '100%', height: '6px', background: '#e5e7eb', borderRadius: '4px' }}>
+                          <div style={{ width: '86%', height: '100%', background: 'var(--success)', borderRadius: '4px' }}></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="dashboard-grid" style={{ gridTemplateColumns: '2fr 1fr' }}>
+                      <div className="card">
+                        <div className="card-header"><AlertIcon /> Recent Diagnosis</div>
+                        {prediction ? (
+                          <div>
+                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}>
+                              <AlertIcon /> {prediction.disease} Detected
+                            </h3>
+                            <p style={{ margin: '1rem 0' }}>{prediction.description.split('.')[0]}.</p>
+                            <button className="btn" onClick={() => setActiveTab('diagnosis')}>View Detailed Scientific Report</button>
+                          </div>
+                        ) : (
+                          <p style={{ color: 'var(--text-light)' }}>No active disease alerts. Upload a leaf image if you suspect an issue.</p>
+                        )}
+                      </div>
+                      
+                      <div className="card">
+                        <div className="card-header"><CalendarIcon /> Next Actions</div>
+                        {schedule ? (
+                          <div className="timeline">
+                            <div className="timeline-item">
+                              <div>
+                                <strong>Today: {schedule[0].action}</strong>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>{schedule[0].description}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                           <p style={{ color: 'var(--text-light)' }}>No scheduled actions.</p>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* DETAILED AI DIAGNOSIS LABORATORY */}
+                {activeTab === 'diagnosis' && (
+                  <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+                    <div className="card" style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                      <h2 style={{ marginBottom: '1rem' }}>AI Crop Disease Diagnosis Laboratory</h2>
+                      <p style={{ marginBottom: '1.5rem', color: 'var(--text-light)' }}>
+                        Upload a clear image of the affected plant leaf. Our convolutional neural network evaluates over 38 unique plant diseases with 99.4% accuracy.
+                      </p>
+                      
+                      <label className="upload-area" style={{ display: 'block', maxWidth: '500px', margin: '0 auto' }}>
+                        <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+                        {!selectedImage ? (
+                          <>
+                            <div style={{ fontSize: '48px', marginBottom: '1rem', color: 'var(--primary-color)' }}>📤</div>
+                            <h3>Click to Upload Crop Image</h3>
+                            <p style={{ color: 'var(--text-light)', marginTop: '0.5rem' }}>JPEG, PNG, High Resolution Preferred</p>
+                          </>
+                        ) : (
+                          <img src={selectedImage} alt="Crop Preview" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', objectFit: 'cover' }} />
+                        )}
+                      </label>
+
+                      {selectedImage && (
+                        <div style={{ marginTop: '1.5rem' }}>
+                          <button className="btn" onClick={runAnalysis} disabled={isAnalyzing} style={{ padding: '1rem 3rem', fontSize: '1.1rem' }}>
+                            {isAnalyzing ? "Running Deep Computer Vision..." : "Run Scientific AI Diagnosis"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* HIGHLY DETAILED REPORT BLOCK */}
+                    {prediction && !isAnalyzing && (
+                       <div style={{ animation: 'fadeIn 0.5s ease-in' }}>
+                          <div style={{ padding: '1.5rem', background: '#fef2f2', borderRadius: '12px', border: '2px solid #fecaca', marginBottom: '1.5rem' }}>
+                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--danger)', fontSize: '1.6rem', margin: 0 }}>
+                               <AlertIcon /> {prediction.disease}
+                            </h3>
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                               <span className="badge danger" style={{ fontSize: '1rem', padding: '0.4rem 1rem' }}>AI Confidence: {(prediction.confidence * 100).toFixed(1)}%</span>
+                               <span className="badge warning" style={{ fontSize: '1rem', padding: '0.4rem 1rem' }}>High Epidemic Risk</span>
+                            </div>
+                            <p style={{ marginTop: '1.25rem', fontSize: '1.1rem', color: 'var(--text-dark)', lineHeight: '1.6' }}>
+                                {prediction.description}
+                            </p>
+                          </div>
+
+                          <div className="dashboard-grid" style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)' }}>
+                             <div className="card" style={{ padding: '1.5rem' }}>
+                                <h4 style={{ color: 'var(--primary-dark)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid #eee', paddingBottom: '0.5rem', fontSize: '1.2rem' }}>
+                                    <ThermalIcon /> Identified Symptoms
+                                </h4>
+                                <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-dark)' }}>
+                                  {prediction.symptoms.map((s, i) => <li key={i} style={{marginBottom:'0.75rem'}}>{s}</li>)}
+                                </ul>
+                             </div>
+
+                             <div className="card" style={{ padding: '1.5rem' }}>
+                                <h4 style={{ color: 'var(--primary-dark)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid #eee', paddingBottom: '0.5rem', fontSize: '1.2rem' }}>
+                                    <ActivityIcon /> Pathogen & Environment
+                                </h4>
+                                <ul style={{ paddingLeft: '1.2rem', color: 'var(--text-dark)' }}>
+                                  {prediction.causes.map((c, i) => <li key={i} style={{marginBottom:'0.75rem'}}>{c}</li>)}
+                                </ul>
+                             </div>
+                          </div>
+
+                          <div className="card" style={{ padding: '2rem', marginTop: '1.5rem', borderLeft: '6px solid var(--danger)' }}>
+                              <h4 style={{ color: 'var(--danger)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.3rem' }}>
+                                  <TestTubeIcon /> Recommended Chemical Treatments
+                              </h4>
+                              {prediction.chemicalTreatment.map((chem, idx) => (
+                                 <div key={idx} style={{ marginBottom: '1.5rem', padding: '1rem', background: '#fafafa', borderRadius: '8px', border: '1px solid #eee' }}>
+                                   <h5 style={{ fontSize: '1.1rem', color: 'var(--primary-dark)', marginBottom: '0.5rem' }}>{chem.name}</h5>
+                                   <p style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                      <strong style={{ color: 'var(--text-dark)' }}>Dosage:</strong> <span style={{ color: 'var(--text-light)' }}>{chem.dosage}</span>
+                                   </p>
+                                 </div>
+                              ))}
+                          </div>
+
+                          <div className="card" style={{ padding: '2rem', marginTop: '1.5rem', borderLeft: '6px solid var(--success)' }}>
+                              <h4 style={{ color: 'var(--success)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.3rem' }}>
+                                  <LeafIcon /> Organic & Cultural Control
+                              </h4>
+                              <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-dark)', marginTop: '1.5rem' }}>
+                                {prediction.organicTreatment.map((org, i) => <li key={i} style={{marginBottom:'1rem'}}>{org}</li>)}
+                              </ul>
+
+                              <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(46, 125, 50, 0.08)', borderRadius: '12px', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                                 <ShieldIcon />
+                                 <div>
+                                    <strong style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Long-term Prevention Strategy</strong>
+                                    <p style={{ color: 'var(--text-dark)' }}>{prediction.prevention}</p>
+                                 </div>
+                              </div>
+                          </div>
+                       </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Timeline & Soil - left intact */}
+                {activeTab === 'timeline' && (
+                  <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
+                    <h2>Treatment Scheduler</h2>
+                    <p style={{ color: 'var(--text-light)', marginBottom: '2rem', marginTop: '0.5rem' }}>
+                      Follow this timeline meticulously to ensure full crop recovery.
+                    </p>
+
+                    {schedule ? (
+                      <div className="timeline">
+                        {schedule.map((evt, idx) => (
+                          <div className="timeline-item" key={idx} style={{ paddingBottom: '1.5rem' }}>
+                            <div>
+                              <strong style={{ color: 'var(--primary-dark)', display: 'block', fontSize: '1.1rem' }}>Day {evt.day}: {evt.action}</strong>
+                              <p style={{ marginTop: '0.25rem', color: 'var(--text-dark)' }}>{evt.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-light)' }}>
+                        <div style={{ fontSize: '48px', marginBottom: '1rem', opacity: 0.5 }}>✔️</div>
+                        <h3>No active treatment plans</h3>
+                        <p>Run a diagnosis to generate a scientific treatment plan.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'soil' && (
+                  <div className="dashboard-grid">
+                     <div className="card">
+                       <div className="card-header">Soil Composition Impact</div>
+                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '1rem' }}>
+                         <div className="stat-value">pH 6.5</div>
+                         <span className="badge warning">Slight Acidic Shift Predicted</span>
+                       </div>
+                       <p style={{ marginTop: '1rem' }}>Based on your recent application of Urea fertilizer, we predict a drop in pH. Consider adding lime or switching to organic compost next cycle.</p>
+                     </div>
+                     
+                     <div className="card">
+                       <div className="card-header">Nutrient Balance (NPK)</div>
+                       <ul style={{ listStyle: 'none', padding: 0 }}>
+                         <li style={{ marginBottom: '0.8rem' }}>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                             <strong>Nitrogen (N)</strong> <span style={{ color: 'var(--danger)' }}>High</span>
+                           </div>
+                           <div style={{ height: '8px', background: '#fee2e2', borderRadius: '4px' }}>
+                             <div style={{ height: '100%', width: '90%', background: 'var(--danger)', borderRadius: '4px' }}></div>
+                           </div>
+                         </li>
+                         <li style={{ marginBottom: '0.8rem' }}>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                             <strong>Phosphorus (P)</strong> <span style={{ color: 'var(--primary-color)' }}>Optimal</span>
+                           </div>
+                           <div style={{ height: '8px', background: '#d1fae5', borderRadius: '4px' }}>
+                             <div style={{ height: '100%', width: '50%', background: 'var(--success)', borderRadius: '4px' }}></div>
+                           </div>
+                         </li>
+                         <li style={{ marginBottom: '0.8rem' }}>
+                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                             <strong>Potassium (K)</strong> <span style={{ color: 'var(--secondary-color)' }}>Low</span>
+                           </div>
+                           <div style={{ height: '8px', background: '#fef3c7', borderRadius: '4px' }}>
+                             <div style={{ height: '100%', width: '25%', background: '#d97706', borderRadius: '4px' }}></div>
+                           </div>
+                         </li>
+                       </ul>
+                     </div>
+                  </div>
+                )}
+              </main>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
